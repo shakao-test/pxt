@@ -1497,6 +1497,11 @@ export class ProjectView
             Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
             pxt.lzmaDecompressAsync(buf))
             .then(contents => {
+                let txt = pxt.Util.htmlUnescape(contents.replace(/^"|"$/g, ""));
+                console.log(txt)
+                // TODO shakao possibly move textToDom -> domToBlock stack into blocklyimporter
+                let xmlBlock = Blockly.Xml.textToDom(txt);
+                console.log(Blockly.Xml.domToBlock(xmlBlock, this.blocksEditor.editor));
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
                 this.importHex(data, options);
             }).catch(e => {
@@ -1546,13 +1551,13 @@ export class ProjectView
     importPNGFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsBufferAsync(file)
-            .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
+            .then(buf => pxt.Util.decodeBlobAsync("data:image/png;base64," +
                 btoa(pxt.Util.uint8ArrayToString(buf))))
             .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
     importPNGBuffer(buf: ArrayBuffer) {
-        screenshot.decodeBlobAsync("data:image/png;base64," +
+        pxt.Util.decodeBlobAsync("data:image/png;base64," +
             btoa(pxt.Util.uint8ArrayToString(new Uint8Array(buf))))
             .then(buf => this.importProjectCoreAsync(buf));
     }
