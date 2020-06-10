@@ -2,6 +2,10 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+    export interface BlockSnippet {
+        xml: string;
+        extensions?: string[];
+    }
 
     /**
      * Converts a DOM into workspace without triggering any Blockly event. Returns the new block ids

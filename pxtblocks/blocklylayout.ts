@@ -179,10 +179,14 @@ namespace pxt.blocks.layout {
         for (let block of topBlocks) {
             text += Blockly.Xml.domToText(Blockly.Xml.blockToDom(block));
         }
+
+        let blockSnippet: BlockSnippet = { xml: pxt.Util.htmlEscape(text) };
+        let blockString = JSON.stringify(blockSnippet, null, 2);
+
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml, text);
+                return toPngAsyncInternal(sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml, blockString);
             }).catch(e => {
                 pxt.reportException(e);
                 return undefined;
@@ -191,7 +195,7 @@ namespace pxt.blocks.layout {
 
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
     function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string, text?: string): Promise<string> {
-        return pxt.lzmaCompressAsync(JSON.stringify(pxt.Util.htmlEscape(text), null, 2))
+        return pxt.lzmaCompressAsync(text)
             .then(blob => {
                 return new Promise<string>((resolve, reject) => {
                     let cvs = document.createElement("canvas") as HTMLCanvasElement;

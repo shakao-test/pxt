@@ -1497,13 +1497,26 @@ export class ProjectView
             Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
             pxt.lzmaDecompressAsync(buf))
             .then(contents => {
-                let txt = pxt.Util.htmlUnescape(contents.replace(/^"|"$/g, ""));
-                console.log(txt)
-                // TODO shakao possibly move textToDom -> domToBlock stack into blocklyimporter
-                let xmlBlock = Blockly.Xml.textToDom(txt);
-                console.log(Blockly.Xml.domToBlock(xmlBlock, this.blocksEditor.editor));
-                let data = JSON.parse(contents) as pxt.cpp.HexFile;
-                this.importHex(data, options);
+                let parsedContents = JSON.parse(contents);
+                if (parsedContents.xml) {
+                    let blockSnippet = parsedContents as pxt.blocks.BlockSnippet;
+                    let txt = pxt.Util.htmlUnescape(blockSnippet.xml.replace(/^"|"$/g, ""));
+                    // TODO shakao possibly move textToDom -> domToBlock stack into blocklyimporter
+                    let ws = this.blocksEditor.editor;
+                    let xmlBlock = Blockly.Xml.textToDom(txt);
+                    let block = Blockly.Xml.domToBlock(xmlBlock, ws) as Blockly.BlockSvg;
+                    if (ws.getMetrics) {
+                        var metrics = ws.getMetrics() as Blockly.Metrics;
+                        var blockDimensions = block.getHeightWidth();
+                        block.moveBy(
+                          metrics.viewLeft + (metrics.viewWidth / 2) - (blockDimensions.width / 2),
+                          metrics.viewTop + (metrics.viewHeight / 2) - (blockDimensions.height / 2)
+                        );
+                    }
+                } else {
+                    let data = parsedContents as pxt.cpp.HexFile;
+                    this.importHex(data, options);
+                }
             }).catch(e => {
                 core.warningNotification(lf("Sorry, we could not import this project."))
                 this.openHome();
