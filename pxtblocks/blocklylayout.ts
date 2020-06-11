@@ -177,7 +177,7 @@ namespace pxt.blocks.layout {
         let blockSnippet: BlockSnippet;
         if (encodeBlocks) {
             blockSnippet = {
-                xml: pxt.Util.htmlEscape(pxt.blocks.saveBlocksXml(ws))
+                xml: pxt.blocks.saveBlocksXml(ws).map(text => pxt.Util.htmlEscape(text))
             };
         }
 
@@ -204,8 +204,10 @@ namespace pxt.blocks.layout {
                     cvs.width = width * pixelDensity;
                     cvs.height = height * pixelDensity;
                     img.onload = function () {
-                        ctx.fillStyle = "#fff";
-                        ctx.fillRect(0, 0, cvs.width, cvs.height);
+                        if (text) {
+                            ctx.fillStyle = "#fff";
+                            ctx.fillRect(0, 0, cvs.width, cvs.height);
+                        }
                         ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
                         let dataLength = cvs.toDataURL("image/png").length;
                         // if the generated image is too big, shrink image

@@ -1500,8 +1500,10 @@ export class ProjectView
                 let parsedContents = JSON.parse(contents);
                 if (parsedContents.xml) {
                     let blockSnippet = parsedContents as pxt.blocks.BlockSnippet;
-                    let text = pxt.Util.htmlUnescape(blockSnippet.xml.replace(/^"|"$/g, ""));
-                    pxt.blocks.loadBlocksXml(this.blocksEditor.editor, text)
+                    blockSnippet.xml.forEach(xml => {
+                        let text = pxt.Util.htmlUnescape(xml.replace(/^"|"$/g, ""));
+                        pxt.blocks.loadBlocksXml(this.blocksEditor.editor, text)
+                    })
                 } else {
                     let data = parsedContents as pxt.cpp.HexFile;
                     this.importHex(data, options);

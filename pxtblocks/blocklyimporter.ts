@@ -3,7 +3,7 @@
 
 namespace pxt.blocks {
     export interface BlockSnippet {
-        xml: string;
+        xml: string[];
         extensions?: string[];
     }
 
@@ -59,12 +59,11 @@ namespace pxt.blocks {
     }
 
     // Saves only the blocks xml by iterating over the top blocks
-    export function saveBlocksXml(ws: Blockly.Workspace, keepIds?: boolean): string {
+    export function saveBlocksXml(ws: Blockly.Workspace, keepIds?: boolean): string[] {
         let topBlocks = ws.getTopBlocks(false);
-        let text = topBlocks.map(block => {
+        return topBlocks.map(block => {
             return Blockly.Xml.domToText(Blockly.Xml.blockToDom(block, !keepIds));
-        }).join();
-        return text;
+        });
     }
 
     export function getDirectChildren(parent: Element, tag: string) {
