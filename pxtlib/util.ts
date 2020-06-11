@@ -1283,9 +1283,11 @@ namespace ts.pxtc.Util {
         }
         // set remaining alpha
         ptr |= 3
-        while (ptr < imgdat.data.length) {
-            if (!transparent) imgdat.data[ptr] = 0xff
-            ptr += 4
+        if (!transparent) {
+            while (ptr < imgdat.data.length) {
+                imgdat.data[ptr] = 0xff
+                ptr += 4
+            }
         }
 
         ctx.putImageData(imgdat, 0, 0)

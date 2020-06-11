@@ -181,7 +181,7 @@ namespace pxt.blocks.layout {
             };
         }
 
-        return toSvgAsync(ws)
+        return toSvgAsync(ws, encodeBlocks)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
                 return toPngAsyncInternal(
@@ -196,8 +196,7 @@ namespace pxt.blocks.layout {
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
     function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string, text?: string): Promise<string> {
         return pxt.lzmaCompressAsync(text)
-            .then(blob => {
-                return new Promise<string>((resolve, reject) => {
+            .then(blob => new Promise<string>((resolve, reject) => {
                     let cvs = document.createElement("canvas") as HTMLCanvasElement;
                     const ctx = cvs.getContext("2d");
                     const img = new Image;
@@ -205,6 +204,8 @@ namespace pxt.blocks.layout {
                     cvs.width = width * pixelDensity;
                     cvs.height = height * pixelDensity;
                     img.onload = function () {
+                        ctx.fillStyle = "#fff";
+                        ctx.fillRect(0, 0, cvs.width, cvs.height);
                         ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
                         let dataLength = cvs.toDataURL("image/png").length;
                         // if the generated image is too big, shrink image
@@ -227,13 +228,12 @@ namespace pxt.blocks.layout {
                         resolve(undefined)
                     }
                     img.src = data;
-                })
-            });
+                }));
     }
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
-    export function toSvgAsync(ws: Blockly.WorkspaceSvg): Promise<{
+    export function toSvgAsync(ws: Blockly.WorkspaceSvg, encodeBlocks?: boolean): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!ws)
@@ -245,7 +245,7 @@ namespace pxt.blocks.layout {
 
         let width = metrics.right - metrics.left;
         let height = metrics.bottom - metrics.top;
-        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height);
+        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height, encodeBlocks);
     }
 
     export function serializeNode(sg: Node): string {
@@ -292,7 +292,7 @@ namespace pxt.blocks.layout {
         return svg;
     }
 
-    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<BlockSvg> {
+    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, encodeBlocks?: boolean): Promise<BlockSvg> {
         if (!sg.childNodes[0])
             return Promise.resolve<BlockSvg>(undefined);
 
@@ -305,6 +305,12 @@ namespace pxt.blocks.layout {
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
         const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
+
+        if (encodeBlocks) {
+            const saveIcon = new pxt.svgUtil.Text("\uf0c7").at(width - 25, 25).setClass("semanticIcon inverted").el;
+            xsg.firstElementChild.appendChild(saveIcon);
+        }
+
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
         const isRtl = Util.isUserLanguageRtl();
         const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
